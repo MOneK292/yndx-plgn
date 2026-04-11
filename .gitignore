@@ -1,0 +1,64 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+*.crx
+*.pem
+*.zip
+
+# Node modules (if using build tools)
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test files
+coverage/
+.nyc_output/
+
+# Debug files
+debug.log
+destraction.html
+
+# Package files
+*.tgz
+*.tar.gz
+
+# Chrome extension specific
+*.crx
+*.pem
+key.pem
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# System files
+.Spotlight-V100
+.Trashes
+ehthumbs.db
