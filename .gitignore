@@ -44,6 +44,15 @@ coverage/
 debug.log
 destraction.html
 
+# Developer-only files (not needed by end users)
+SUMMARY_FINAL.md
+SUMMARY.md
+VERIFICATION_REPORT.md
+DEPLOY.md
+GITHUB_SETUP.md
+QUICK_DEPLOY.bat
+QUICK_DEPLOY.sh
+
 # Package files
 *.tgz
 *.tar.gz
