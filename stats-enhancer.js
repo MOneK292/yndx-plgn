@@ -1,161 +1,118 @@
-// Скрипт для добавления расчетов в рублях к статистике задач
+// stats-enhancer.js - Итоговая сумма в первой строке
+
 function enhanceStatsWithPrices() {
-  console.log('[StatsEnhancer] Запуск функции добавления стоимости...');
-  
+  // 1. Проверяем, открыт ли "Диспетчер задач"
+  const selectedTab = document.querySelector('.nk-tabs-bar__tab_selected');
+  if (!selectedTab || !selectedTab.textContent.includes('Диспетчер задач')) {
+    return;
+  }
+
   const coefficients = {
-    'сообщения о неточностях': {
-      'сделано базовых': 6,
-      'выполнено проверок': 6.5
-    },
-    'модерация': {
-      'сделано базовых': 1.5,
-      'выполнено проверок': 3
-    }
+    'сообщения о неточностях': { 'сделано базовых': 6, 'выполнено проверок': 6.5 },
+    'модерация': { 'сделано базовых': 1.5, 'выполнено проверок': 3 }
   };
 
-  const sections = document.querySelectorAll('.nk-section_level_1 > .nk-section_level_2');
-  console.log(`[StatsEnhancer] Найдено секций: ${sections.length}`);
-  
-  sections.forEach((section, idx) => {
+  const sections = document.querySelectorAll('.nk-section_level_2, .nk-section_level_1 > .nk-section_level_2');
+  if (sections.length === 0) return;
+
+  let totalMoney = 0;
+  let targetRowForTotal = null; // Здесь будем хранить самую верхнюю строку
+
+  sections.forEach((section) => {
     const labelElement = section.querySelector('.nk-sidebar-control__label');
-    if (!labelElement) {
-      console.log(`[StatsEnhancer] Секция ${idx}: нет labelElement`);
-      return;
-    }
+    if (!labelElement) return;
     
     const sectionName = labelElement.textContent.replace(/\u00A0/g, ' ').trim().toLowerCase();
-    console.log(`[StatsEnhancer] Секция ${idx}: "${sectionName}"`);
     
-    const sectionCoeffs = coefficients[sectionName];
-    
-    if (!sectionCoeffs) {
-      console.log(`[StatsEnhancer] Секция ${idx}: нет коэффициентов для "${sectionName}"`);
-      return;
+    // Более гибкое сопоставление имени секции
+    let sectionCoeffs = null;
+    if (sectionName.includes('сообщения о неточностях') || sectionName.includes('неточност')) {
+      sectionCoeffs = coefficients['сообщения о неточностях'];
+    } else if (sectionName.includes('модерация')) {
+      sectionCoeffs = coefficients['модерация'];
     }
+    
+    if (!sectionCoeffs) return;
     
     const statsRows = section.querySelectorAll('.nk-user-tasks-auto-manager-view__tasks-stats-row');
-    console.log(`[StatsEnhancer] Секция ${idx}: найдено строк статистики: ${statsRows.length}`);
     
-    if (statsRows.length === 0) {
-      // Попробуем альтернативные селекторы
-      const altRows = section.querySelectorAll('[class*="stats-row"], [class*="task-row"]');
-      console.log(`[StatsEnhancer] Секция ${idx}: альтернативный поиск нашел: ${altRows.length}`);
-    }
-    
-    statsRows.forEach((row, rowIdx) => {
-      const text = row.textContent.trim();
-      console.log(`[StatsEnhancer] Строка ${rowIdx}: "${text}"`);
-      
-      // Проверяем, есть ли уже цена (чтобы не дублировать)
-      if (text.includes('₽')) {
-        // Обновляем существующую цену
-        const match = text.match(/^(.+?):\s*(\d+)/);
-        if (!match) return;
-        
-        const statName = match[1].trim().toLowerCase();
-        const count = parseInt(match[2], 10);
-        const coeff = sectionCoeffs[statName];
-        if (!coeff) return;
-        
-        const rubles = Math.round(count * coeff);
-        row.innerHTML = `${match[1]}: ${count} <span style="color: #FFC107; margin-left: 4px;">${rubles} ₽</span>`;
-        console.log(`[StatsEnhancer] ✅ Обновлена цена для "${statName}": ${rubles} ₽`);
-        return;
+    statsRows.forEach((row) => {
+      // Читаем только оригинальный текст (чтобы не прочитать спаны с деньгами)
+      let originalText = '';
+      for (let node of row.childNodes) {
+        if (node.nodeType === 3) {
+          originalText += node.textContent;
+        }
       }
+      originalText = originalText.replace(/\u00A0/g, ' ').trim();
       
-      const match = text.match(/^(.+?):\s*(\d+)/);
-      if (!match) {
-        console.log(`[StatsEnhancer] Строка ${rowIdx}: не соответствует паттерну`);
-        return;
-      }
+      const match = originalText.match(/^(.+?):\s*(\d+)/);
+      if (!match) return;
       
       const statName = match[1].trim().toLowerCase();
       const count = parseInt(match[2], 10);
       
-      const coeff = sectionCoeffs[statName];
-      if (!coeff) {
-        console.log(`[StatsEnhancer] Строка ${rowIdx}: нет коэффициента для "${statName}"`);
-        return;
+      // Ищем коэффициент с гибким совпадением названия метрики
+      let coeff = null;
+      for (const [key, val] of Object.entries(sectionCoeffs)) {
+        if (statName.includes(key) || key.includes(statName)) {
+          coeff = val;
+          break;
+        }
       }
       
-      const rubles = Math.round(count * coeff);
+      if (!coeff) return;
       
-      row.innerHTML = `${match[1]}: ${count} <span style="color: #FFC107; margin-left: 4px;">${rubles} ₽</span>`;
-      console.log(`[StatsEnhancer] ✅ Добавлена цена для "${statName}": ${rubles} ₽`);
+      const rubles = Math.round(count * coeff);
+      totalMoney += rubles; 
+      
+      let priceSpan = row.querySelector('.nk-money-span');
+      if (!priceSpan) {
+        priceSpan = document.createElement('span');
+        priceSpan.className = 'nk-money-span';
+        priceSpan.style.cssText = 'color: #FFC107; font-weight: bold; margin-left: 6px;';
+        row.appendChild(priceSpan);
+      }
+      
+      const newPriceText = `${rubles} ₽`;
+      if (priceSpan.textContent !== newPriceText) {
+        priceSpan.textContent = newPriceText;
+      }
+
+      // Запоминаем самую ПЕРВУЮ успешную строку
+      if (!targetRowForTotal) {
+        targetRowForTotal = row;
+      }
     });
   });
   
-  console.log('[StatsEnhancer] Завершение функции');
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(enhanceStatsWithPrices, 1000);
-  });
-} else {
-  setTimeout(enhanceStatsWithPrices, 1000);
-}
-
-let statsEnhancerTimeout;
-let statsEnhancerLastRun = 0;
-const STATS_ENHANCER_MIN_INTERVAL = 3000; // Минимум 3 секунды между срабатываниями
-const STATS_ENHANCER_DEBOUNCE = 2000; // Debounce 2 секунды
-let statsEnhancerPending = false;
-
-const statsObserver = new MutationObserver((mutations) => {
-  // Жесткое ограничение - не чаще 1 раза в 3 секунды
-  const now = Date.now();
-  const timeSinceLastRun = now - statsEnhancerLastRun;
-  
-  if (timeSinceLastRun < STATS_ENHANCER_MIN_INTERVAL) {
-    return; // Пропускаем если слишком рано
-  }
-  
-  // Если уже запланирован запуск, не планируем новый
-  if (statsEnhancerPending) {
-    return;
-  }
-  
-  // Более строгая фильтрация
-  const hasStatsChanges = mutations.some(mutation => {
-    // Игнорируем изменения атрибутов и текста
-    if (mutation.type !== 'childList') {
-      return false;
+  // Добавляем общую сумму в первую строку (в targetRowForTotal)
+  if (totalMoney > 0 && targetRowForTotal) {
+    let totalBlock = document.getElementById('nk-total-money-span');
+    
+    if (!totalBlock) {
+      totalBlock = document.createElement('span');
+      totalBlock.id = 'nk-total-money-span';
+      totalBlock.style.cssText = 'color: #D84315; font-weight: bold; margin-left: 6px;';
+      targetRowForTotal.appendChild(totalBlock); // Вставляем в конец первой строки
     }
     
-    return Array.from(mutation.addedNodes).some(node => {
-      if (node.nodeType !== 1) return false; // Только элементы
-      
-      // Проверяем только релевантные элементы
-      return node.classList?.contains('nk-sidebar-view') ||
-             node.classList?.contains('nk-user-tasks-auto-manager-view__tasks-stats-row') ||
-             node.querySelector?.('.nk-user-tasks-auto-manager-view__tasks-stats-row');
-    });
-  });
-  
-  if (!hasStatsChanges) {
-    return; // Пропускаем нерелевантные изменения
+    const newTotalText = `${totalMoney} ₽`;
+    if (totalBlock.textContent !== newTotalText) {
+      totalBlock.textContent = newTotalText;
+    }
   }
-  
-  statsEnhancerPending = true;
-  clearTimeout(statsEnhancerTimeout);
-  statsEnhancerTimeout = setTimeout(() => {
-    statsEnhancerLastRun = Date.now();
-    statsEnhancerPending = false;
-    enhanceStatsWithPrices();
-  }, STATS_ENHANCER_DEBOUNCE);
-});
+}
 
-setTimeout(() => {
-  const targetNode = document.body;
-  if (targetNode) {
-    console.log('[StatsEnhancer] Запуск MutationObserver (постоянный)');
-    statsObserver.observe(targetNode, {
-      childList: true,
-      subtree: true,
-      // Отключаем отслеживание атрибутов и текста
-      attributes: false,
-      characterData: false
-    });
+// Запуск при инициализации и периодически каждые 1.5 секунды
+// Это гарантирует, что сумма всегда отображается, даже если данные загрузились позже,
+// при этом не нагружая систему MutationObserver-ом.
+enhanceStatsWithPrices();
+setInterval(enhanceStatsWithPrices, 1500);
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.nk-tabs-bar__tab')) {
+    setTimeout(enhanceStatsWithPrices, 200);
+    setTimeout(enhanceStatsWithPrices, 800);
   }
-}, 2000);
+}, { passive: true });

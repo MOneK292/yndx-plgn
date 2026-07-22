@@ -1,13 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Stats Button",
-  "version": "1.5.0",
+  "version": "1.5.3",
   "description": "Плагин для отслеживания статистики заданий",
   "permissions": [
     "storage",
     "scripting",
-    "activeTab",
-    "webRequest"
+    "activeTab"
   ],
   "host_permissions": [
     "https://npro.maps.yandex.ru/*",
@@ -31,7 +30,6 @@
         "https://npro.maps.yandex.ru/*"
       ],
       "js": [
-        "performance-check.js",
         "hotkeys.js",
         "support-message-buttons.js",
         "content-script.js",

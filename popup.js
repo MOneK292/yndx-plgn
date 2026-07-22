@@ -141,8 +141,10 @@ class PopupSync {
       return;
     }
     const now = Date.now();
-    if (now - this.lastFetchTime < 10000) {
-      out.textContent = 'Слишком частый запрос\nПопробуйте через 10 сек';
+    // УВЕЛИЧЕНО до 60000 мс
+    if (now - this.lastFetchTime < 60000) {
+      const timeLeft = Math.ceil((60000 - (now - this.lastFetchTime)) / 1000);
+      out.textContent = `Слишком часто!\nАнти-бан пауза: ${timeLeft} сек`;
       return;
     }
     if (this.isFetching) {

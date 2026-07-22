@@ -364,33 +364,38 @@ class HotkeyManager {
     return false;
   }
 
-  // 2. ALT+X - Непрерывный режим
+// 2. ALT+X - Непрерывный режим
   toggleContinuousMode() {
     console.log('[Hotkeys] Alt+X: Переключение непрерывного режима...');
     
-    const labels = Array.from(document.querySelectorAll('label'));
-    const continuousLabel = labels.find(l => 
-      l.textContent.toLowerCase().includes('непрерывной')
-    );
-    
-    if (continuousLabel) {
-      console.log('[Hotkeys] ✅ Label найден');
+    // Пытаемся переключить через наш умный счетчик (чтобы не было рассинхрона)
+    if (window.taskCounter) {
+      const newState = !window.taskCounter.continuousMode;
+      console.log('[Hotkeys] Переключаем счетчик в состояние:', newState);
       
-      const checkbox = continuousLabel.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        console.log('[Hotkeys] Текущее состояние:', checkbox.checked ? 'ВКЛ' : 'ВЫКЛ');
-        console.log('[Hotkeys] Переключаем...');
-        
-        continuousLabel.click();
-        
-        if (window.taskCounter) {
-          window.taskCounter.continuousMode = !checkbox.checked;
-        }
-      } else {
-        console.log('[Hotkeys] ❌ Чекбокс не найден внутри label');
+      // Меняем чекбокс в шапке
+      const headerCb = document.getElementById('continuous-toggle-header');
+      if (headerCb) headerCb.checked = newState;
+      
+      // Запускаем переключение реального чекбокса
+      window.taskCounter.toggleContinuousMode(newState);
+      
+      // Сохраняем
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({ continuousMode: newState });
       }
     } else {
-      console.log('[Hotkeys] ❌ Label не найден');
+      // Резервный вариант, если счетчика нет
+      console.log('[Hotkeys] Счетчик не найден, пробуем кликнуть вручную');
+      const labels = Array.from(document.querySelectorAll('.nk-checkbox, label'));
+      const continuousLabel = labels.find(l => l.textContent.toLowerCase().includes('непрерывн'));
+      
+      if (continuousLabel) {
+        const clickable = continuousLabel.closest('.nk-checkbox') || continuousLabel;
+        this.simulateRealClick(clickable);
+      } else {
+        console.log('[Hotkeys] ❌ Чекбокс не найден');
+      }
     }
   }
 
@@ -448,10 +453,18 @@ class HotkeyManager {
 
   // 5. ALT+D - Забраковать
   rejectTask() {
-    console.log('[Hotkeys] Alt+D: Поиск кнопки отклонения...');
-    
-    const allButtons = Array.from(document.querySelectorAll('button'));
-    const rejectTexts = ['неверно', 'отклонить', 'забраковать', 'отказать'];
+      console.log('[Hotkeys] Alt+D: Поиск кнопки отклонения...');
+      
+      // БЫСТРЫЙ ПУТЬ: Ищем по известным классам модерации Яндекса (если они есть)
+      const exactButton = document.querySelector('.nk-moderation-task-view__actions-button_action_reject');
+      if (exactButton && !exactButton.disabled) {
+        this.simulateRealClick(exactButton);
+        return;
+      }
+
+      // МЕДЛЕННЫЙ ПУТЬ: Оставляем ваш старый код с поиском по тексту как fallback
+      const allButtons = document.querySelectorAll('button');
+      const rejectTexts = ['неверно', 'отклонить', 'забраковать', 'отказать'];
     
     let rejectButton = null;
     
