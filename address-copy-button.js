@@ -122,7 +122,7 @@ function addCopyButtonToHouseNumber() {
     const houseNumText = houseNumEl.textContent.trim();
     if (!houseNumText) return;
 
-    const parentToAppend = houseNumEl.closest('.nk-name-row-layout__name') || houseNumEl.parentElement;
+        const parentToAppend = houseNumEl.closest('.nk-text-control__text') || houseNumEl.parentElement;
     if (!parentToAppend) return;
 
     if (parentToAppend.querySelector('.house-copy-btn')) {
