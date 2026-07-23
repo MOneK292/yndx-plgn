@@ -2,7 +2,35 @@
 function addCopyButtonToAddress() {
   const addressElements = document.querySelectorAll('.nk-geoobject-preview-opener-view');
   
+  // Список не копируемых общих типов и маневров
+  const ignoredTypes = [
+    'запрещённый манёвр',
+    'разрешённый манёвр',
+    'манёвр',
+    'светофор',
+    'пешеходный светофор',
+    'искусственная неровность',
+    'железнодорожный переезд',
+    'камера'
+  ];
+
   addressElements.forEach((addressElement) => {
+    // Получаем только непосредственный текст элемента (без вложенных тегов)
+    let directText = '';
+    for (let node of addressElement.childNodes) {
+      if (node.nodeType === 3) {
+        directText += node.textContent;
+      }
+    }
+    directText = directText.trim().toLowerCase();
+    
+    if (!directText) return;
+    
+    // Игнорируем общие типы и маневры без названия
+    if (ignoredTypes.some(type => directText.includes(type))) {
+      return;
+    }
+    
     const addressText = addressElement.textContent.trim();
     if (!addressText) return;
     
