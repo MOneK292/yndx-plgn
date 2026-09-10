@@ -367,35 +367,15 @@ class HotkeyManager {
 // 2. ALT+X - Непрерывный режим
   toggleContinuousMode() {
     console.log('[Hotkeys] Alt+X: Переключение непрерывного режима...');
+    const labels = Array.from(document.querySelectorAll('.nk-checkbox, label'));
+    const continuousLabel = labels.find(l => l.textContent.toLowerCase().includes('непрерывн'));
     
-    // Пытаемся переключить через наш умный счетчик (чтобы не было рассинхрона)
-    if (window.taskCounter) {
-      const newState = !window.taskCounter.continuousMode;
-      console.log('[Hotkeys] Переключаем счетчик в состояние:', newState);
-      
-      // Меняем чекбокс в шапке
-      const headerCb = document.getElementById('continuous-toggle-header');
-      if (headerCb) headerCb.checked = newState;
-      
-      // Запускаем переключение реального чекбокса
-      window.taskCounter.toggleContinuousMode(newState);
-      
-      // Сохраняем
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.local.set({ continuousMode: newState });
-      }
+    if (continuousLabel) {
+      const clickable = continuousLabel.closest('.nk-checkbox') || continuousLabel;
+      this.simulateRealClick(clickable);
+      console.log('[Hotkeys] ✅ Непрерывный режим переключен');
     } else {
-      // Резервный вариант, если счетчика нет
-      console.log('[Hotkeys] Счетчик не найден, пробуем кликнуть вручную');
-      const labels = Array.from(document.querySelectorAll('.nk-checkbox, label'));
-      const continuousLabel = labels.find(l => l.textContent.toLowerCase().includes('непрерывн'));
-      
-      if (continuousLabel) {
-        const clickable = continuousLabel.closest('.nk-checkbox') || continuousLabel;
-        this.simulateRealClick(clickable);
-      } else {
-        console.log('[Hotkeys] ❌ Чекбокс не найден');
-      }
+      console.log('[Hotkeys] ❌ Чекбокс непрерывного режима не найден');
     }
   }
 
@@ -497,20 +477,12 @@ class HotkeyManager {
     }
   }
 
-  // 6. ALT+N - Статистика
+  // 6. ALT+N - Пересчет статистики цен
   fetchStats() {
-    console.log('[Hotkeys] Alt+N: Получение статистики...');
-    
-    if (window.taskCounter && typeof window.taskCounter.fetchStatsDirectly === 'function') {
-      window.taskCounter.fetchStatsDirectly();
-      console.log('[Hotkeys] ✅ Запрос статистики отправлен');
-    } else {
-      console.log('[Hotkeys] ❌ Счетчик не найден');
-      
-      if (typeof initTaskCounter === 'function') {
-        initTaskCounter();
-        console.log('[Hotkeys] Пытаемся инициализировать счетчик...');
-      }
+    console.log('[Hotkeys] Alt+N: Пересчет статистики цен...');
+    if (typeof enhanceStatsWithPrices === 'function') {
+      enhanceStatsWithPrices();
+      console.log('[Hotkeys] ✅ enhanceStatsWithPrices вызван');
     }
   }
 

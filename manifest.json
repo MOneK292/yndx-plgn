@@ -1,28 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Stats Button",
-  "version": "1.5.3",
-  "description": "Плагин для отслеживания статистики заданий",
-  "permissions": [
-    "storage",
-    "scripting",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "https://npro.maps.yandex.ru/*",
-    "https://mc.yandex.ru/*"
-  ],
-  "background": {
-    "service_worker": "background.js"
+  "version": "2.0.0",
+  "description": "Быстрые клавиши, подсчет стоимости задач, шаблоны сообщений и копирование объектов",
+  "icons": {
+    "128": "icons/icon128.png"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "128": "icons/icon128.png"
     }
-  },
-  "icons": {
-    "128": "icons/icon128.png"
   },
   "content_scripts": [
     {
@@ -32,17 +19,10 @@
       "js": [
         "hotkeys.js",
         "support-message-buttons.js",
-        "content-script.js",
         "stats-enhancer.js",
         "address-copy-button.js"
       ],
       "run_at": "document_idle"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["token-finder-inpage.js"],
-      "matches": ["https://npro.maps.yandex.ru/*"]
     }
   ]
 }
