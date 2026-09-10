@@ -364,18 +364,21 @@ class HotkeyManager {
     return false;
   }
 
-// 2. ALT+X - Непрерывный режим
+// 2. ALT+X - Непрерывный режим выдачи заданий
   toggleContinuousMode() {
-    console.log('[Hotkeys] Alt+X: Переключение непрерывного режима...');
+    console.log('[Hotkeys] Alt+X: Переключение режима непрерывной выдачи заданий...');
     const labels = Array.from(document.querySelectorAll('.nk-checkbox, label'));
-    const continuousLabel = labels.find(l => l.textContent.toLowerCase().includes('непрерывн'));
+    const continuousLabel = labels.find(l => {
+      const text = l.textContent.replace(/\u00A0/g, ' ').toLowerCase();
+      return text.includes('непрерывной выдачи');
+    });
     
     if (continuousLabel) {
       const clickable = continuousLabel.closest('.nk-checkbox') || continuousLabel;
       this.simulateRealClick(clickable);
-      console.log('[Hotkeys] ✅ Непрерывный режим переключен');
+      console.log('[Hotkeys] ✅ Режим непрерывной выдачи заданий переключен');
     } else {
-      console.log('[Hotkeys] ❌ Чекбокс непрерывного режима не найден');
+      console.log('[Hotkeys] ❌ Чекбокс режима непрерывной выдачи заданий не найден');
     }
   }
 
